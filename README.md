@@ -1,2 +1,2 @@
-# analyzing_constrained_LLM_through_PDFA_learning
+# Analyzing Constrained LLM through PDFA Learning
 Experiments repository for paper "Analyzing constrained LLM through PDFA-learning"
