@@ -10,3 +10,7 @@ The main script for running performance experiments and generate data for case s
 
 For Case study 1, refer to notebook:
 './case_studies/case_study_1_analize_man_woman/gpt2_man_woman_case_study.ipynb'
+
+Library Versions Used:
+pythautomata==0.39.4
+pymodelextractor==0.37.5
