@@ -61,6 +61,5 @@ def sample():
         results.append(''.join(prompt[1:]))
 
     df = pd.DataFrame(results, columns=["floating-point"])
-    df.to_csv("./results/llm_10k_all_tokens_length_n.csv", index=False)
-
+    df.to_csv("./case_studies/case_study_2_generate_floating_point/compare_distribution_all_tokens_mask_floating_point_length_n/results/llm_10k_all_tokens_length_n.csv", index=False)
 
