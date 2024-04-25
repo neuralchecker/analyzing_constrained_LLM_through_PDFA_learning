@@ -2,7 +2,6 @@ import torch
 import time
 import pandas as pd
 import numpy as np
-import os
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 import outlines
@@ -14,12 +13,8 @@ from src.syncronic_model_guided_language_model import SyncronicModelGuidedLangua
 from guiding_wfas.floating_point_wfa_01 import get_floating_point_wfa_01
 from src.hypothesis_aware_sample_probabilistic_teacher import HypothesisAwareSampleProbabilisticTeacher
 from pymodelextractor.learners.observation_tree_learners.bounded_pdfa_quantization_n_ary_tree_learner import BoundedPDFAQuantizationNAryTreeLearner
-from pythautomata.utilities.probability_partitioner import TopKProbabilityPartitioner, QuantizationProbabilityPartitioner, RankingPartitioner
 from pythautomata.model_comparators.wfa_partition_comparison_strategy import WFAPartitionComparator
-from pythautomata.utilities.guiding_wfa_sequence_generator import GuidingWDFASequenceGenerator
 from pythautomata.utilities.pdfa_operations import get_representative_sample
-from sampling.get_representative_sample_token import get_representative_sample_token
-from sampling.get_representative_sample_length import get_representative_sample_length
 from src.floating_point_partitioner import FloatingPointProbabilityPartitioner
 
 # This benchmark generates every sample for each algorithm
@@ -37,12 +32,14 @@ def benchmark_algorithms(sample_size: int, number_of_executions: int = 1):
         outlinesModel = Transformers(model, tokenizer)
 
         # ------------------------------------- OUTLINES --------------------------------------------
-        prompt = tokenizer.decode(tokenizer.bos_token_id)
+        bos_outlines = tokenizer.decode(tokenizer.bos_token_id)
+        prompt = bos_outlines
 
         gen_time = 0
         start_time = time.time()
         outlinesGenerator = outlines.generate.regex(outlinesModel, "\.[0-9]+")
         gen_time = time.time() - start_time
+
         sample_time = 0
         start_time = time.time()
         for i in range(sample_size):
@@ -60,29 +57,38 @@ def benchmark_algorithms(sample_size: int, number_of_executions: int = 1):
         model_id, model, tokenizer, device = get_gpt2_model_and_tokenizer()
         wrapper = GPT2_probabilistic_model_wrapper(50, alphabet, device, model, tokenizer)
         property_model = get_floating_point_wfa_01(wrapper.terminal_symbol)
-        synchronic_model = SyncronicModelGuidedLanguageModel(wrapper, property_model, model_name="GUIDED_GPT2", max_seq_length=10, normalize_outputs=True)
-        guiding_generator = GuidingWDFASequenceGenerator(property_model, None)
+        synchronic_model = SyncronicModelGuidedLanguageModel(wrapper, 
+                                                             property_model, 
+                                                             model_name="GUIDED_GPT2", 
+                                                             max_seq_length=10, 
+                                                             normalize_outputs=True)
         partitioner = FloatingPointProbabilityPartitioner()
         comparator = WFAPartitionComparator(partitioner)
-        epsilon = 0.05
-        delta = epsilon
-        sequence_generator = guiding_generator
         max_states = 100
         max_query_length = 100
-        teacher = HypothesisAwareSampleProbabilisticTeacher(synchronic_model, comparator = comparator, max_seq_length = 4, sample_size = 100)
-        learner = BoundedPDFAQuantizationNAryTreeLearner(partitioner = partitioner, max_states = max_states, max_query_length = max_query_length, max_seconds_run = None, generate_partial_hipothesis = True, pre_cache_queries_for_building_hipothesis = True,  check_probabilistic_hipothesis = True, mean_distribution_for_partial_hipothesis = True, omit_zero_transitions = True)
+        teacher = HypothesisAwareSampleProbabilisticTeacher(synchronic_model, 
+                                                            comparator = comparator, 
+                                                            max_seq_length = 4, 
+                                                            sample_size = 100)
+        learner = BoundedPDFAQuantizationNAryTreeLearner(partitioner = partitioner, 
+                                                         max_states = max_states, 
+                                                         max_query_length = max_query_length, 
+                                                         max_seconds_run = None, 
+                                                         generate_partial_hipothesis = True, 
+                                                         pre_cache_queries_for_building_hipothesis = True,  
+                                                         check_probabilistic_hipothesis = True, 
+                                                         mean_distribution_for_partial_hipothesis = True, 
+                                                         omit_zero_transitions = True)
 
-        
         gen_time = 0
         start_time = time.time()
         learning_result = learner.learn(teacher, verbose=False)
         gen_time = time.time() - start_time
+        
         pdfa = learning_result.model
-
         sample_time = 0
         start_time = time.time()
-        get_representative_sample(pdfa, sample_size)
-        #get_representative_sample_length(pdfa, sample_size = sample_size, length=1, retry=False)
+        get_representative_sample(pdfa, sample_size = sample_size)
         sample_time = time.time() - start_time
         
         res = ("PDFA", sample_size, gen_time, sample_time)
@@ -98,9 +104,10 @@ def benchmark_algorithms(sample_size: int, number_of_executions: int = 1):
         for i in range(sample_size):
 
             next_token = ""
-            prompt = [tokenizer.decode(tokenizer.bos_token_id) , "."]
+            bos_dot = [tokenizer.decode(tokenizer.bos_token_id) , "."]
+            prompt = bos_dot
             min_digits = 1
-            max_digits = 99999
+            max_digits = np.inf
             while next_token != tokenizer.decode(tokenizer.eos_token_id):            
                 if len(prompt) > min_digits+1:
                     normalized_word_probs = calculate_probs(prompt, True, tokenizer, device, model)
@@ -117,14 +124,6 @@ def benchmark_algorithms(sample_size: int, number_of_executions: int = 1):
         res = ("GPT2", sample_size, gen_time, sample_time)
         results.append(res)
         print(res)
-
-    # dfresults = pd.DataFrame(results, columns=["Algorithm", "Samples", "Generation Time", "Sample Time"])
-    # try:
-    #      os.mkdir("./benchmarks/results")
-    # except OSError as error:
-    #      print(error)
-    # dfresults.to_csv(f"./benchmarks/results/benchmark_1_{time.time()}.csv", index=False)
-
     
     
 def calculate_probs(prompt, eos, tokenizer, device, model):

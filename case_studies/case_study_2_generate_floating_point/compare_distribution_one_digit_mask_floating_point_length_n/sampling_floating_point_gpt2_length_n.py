@@ -45,7 +45,7 @@ def sample():
         next_token = ""
         prompt = [tokenizer.decode(tokenizer.bos_token_id) , "."]
         min_digits = 1
-        max_digits = 999999
+        max_digits = np.inf
         while next_token != tokenizer.decode(tokenizer.eos_token_id):            
             if len(prompt) > min_digits+1:
                 normalized_word_probs = calculate_probs(prompt, True, model, tokenizer)
@@ -60,7 +60,6 @@ def sample():
         results.append(''.join(prompt[1:]))
         
     df = pd.DataFrame(results, columns=["floating-point"])
-    df.to_csv("./results/llm_10k_length_n.csv", index=False)
- 
+    df.to_csv("./case_studies/case_study_2_generate_floating_point/compare_distribution_one_digit_mask_floating_point_length_n/results/llm_10k_length_n.csv", index=False) 
 
 

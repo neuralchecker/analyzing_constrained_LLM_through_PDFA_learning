@@ -4,13 +4,13 @@ import pandas as pd
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 import outlines
-import outlines.caching as cache
 from outlines.models.transformers import Transformers
 
 def sample():
     model_id, model, tokenizer, device = get_gpt2_model_and_tokenizer()
     outlinesModel = Transformers(model, tokenizer)
-    prompt = tokenizer.decode(tokenizer.bos_token_id)
+    bos_outlines = tokenizer.decode(tokenizer.bos_token_id)
+    prompt = bos_outlines
     outlinesGenerator = outlines.generate.regex(outlinesModel, "\.[0-9]+")
 
     floating_points = []
@@ -20,8 +20,7 @@ def sample():
 
     
     df = pd.DataFrame(floating_points, columns=["floating-point"])
-    df.to_csv("./results/outlines_10k_length_n.csv", index=False)
-
+    df.to_csv("./case_studies/case_study_2_generate_floating_point/compare_distribution_all_tokens_mask_floating_point_length_n/results/outlines_10k_length_n.csv", index=False)
 
 def get_gpt2_model_and_tokenizer():
     torch.manual_seed(42)
