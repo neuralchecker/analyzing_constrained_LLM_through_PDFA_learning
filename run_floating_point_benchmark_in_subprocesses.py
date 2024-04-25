@@ -1,14 +1,12 @@
 import subprocess
 import re
-import os
 import pandas as pd
-import datetime
 
 def run():
     results = []
-    number_of_executions = 6
+    number_of_executions = 5
     for i in range(number_of_executions):
-        samples = [20, 40, 160]
+        samples = [1000, 3000, 5000]
         for sample in samples:
             #this is to run outlines in another process so the cache doesnt affect the results
             p = subprocess.Popen(["python", "run_floating_point_benchmark.py", str(sample)], stdout=subprocess.PIPE)
@@ -26,9 +24,4 @@ def run():
 
 
     dfresults = pd.DataFrame(results, columns=["Algorithm", "Samples", "Execution", "Generation Time", "Sample Time"])
-    try:
-         os.mkdir("./benchmarks/results")
-    except OSError as error:
-         print(error)
-    dfresults.to_csv('./benchmarks/results/' +
-                     datetime.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")+'.csv', index=False)
+    dfresults.to_csv('./case_studies/case_study_2_generate_floating_point/compare_time_one_digit_mask_floating_point_digits_length_n/results/' +'one_digit_mask_length_n.csv', index=False)
