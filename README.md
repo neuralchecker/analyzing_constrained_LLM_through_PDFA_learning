@@ -1,5 +1,5 @@
 # Analyzing Constrained LLM through PDFA Learning
-Experiments repository for paper "Analyzing constrained LLM through PDFA-learning"
+Experiments repository for paper ["Analyzing constrained LLM through PDFA-learning"](https://arxiv.org/abs/2406.08269)
 
 The main script for running performance experiments and generate data for case studies is './run_experiment.py'  which should be parameterized by a number we will call 'run_type'.
 - run_type = 1 : performance experiment a
